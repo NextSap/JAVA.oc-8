@@ -60,7 +60,10 @@ public class RewardsService {
         List<VisitedLocation> userLocations = new ArrayList<>(user.getVisitedLocations());
         List<Attraction> attractions = gpsUtil.getAttractions();
 
-        System.out.println("débug");
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        System.out.println(" --- débug start ---");
+        System.out.println(stackTraceElements[2].getMethodName() + " - " + stackTraceElements[2].getLineNumber());
+        System.out.println(" --- débug start ---");
 
         for (VisitedLocation visitedLocation : userLocations) {
             for (Attraction attraction : attractions) {

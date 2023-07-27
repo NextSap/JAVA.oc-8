@@ -48,22 +48,19 @@ public class TestRewardsService {
 
 	@Test
 	public void nearAllAttractions() {
-		System.out.println("nearAllAttractions start");
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardCentral rewardsCentral = new RewardCentral();
 		RewardsService rewardsService = new RewardsService(gpsUtil, rewardsCentral);
 		rewardsService.setProximityBuffer(Integer.MAX_VALUE);
-		System.out.println("break 1");
+
 		InternalTestHelper.setInternalUserNumber(1);
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, rewardsCentral);
-		System.out.println("break 2");
+
 		rewardsService.calculateRewards(tourGuideService.getAllUsers().get(0));
-		System.out.println("break 3");
+
 		List<UserReward> userRewards = tourGuideService.getUserRewards(tourGuideService.getAllUsers().get(0));
-		System.out.println("break 4");
+
 		tourGuideService.tracker.stopTracking();
-		System.out.println("break 5");
-		System.out.println("nearAllAttractions end");
 		assertEquals(gpsUtil.getAttractions().size(), userRewards.size());
 	}
 
