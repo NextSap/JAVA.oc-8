@@ -53,10 +53,10 @@ public class TestRewardsService {
 		RewardCentral rewardsCentral = new RewardCentral();
 		RewardsService rewardsService = new RewardsService(gpsUtil, rewardsCentral);
 		rewardsService.setProximityBuffer(Integer.MAX_VALUE);
-
+		System.out.println("break 1");
 		InternalTestHelper.setInternalUserNumber(1);
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, rewardsCentral);
-
+		System.out.println("break 2");
 		rewardsService.calculateRewards(tourGuideService.getAllUsers().get(0));
 		List<UserReward> userRewards = tourGuideService.getUserRewards(tourGuideService.getAllUsers().get(0));
 		tourGuideService.tracker.stopTracking();
