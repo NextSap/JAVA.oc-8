@@ -11,6 +11,7 @@ import rewardCentral.RewardCentral;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 @Service
 public class RewardsService {
@@ -36,15 +37,35 @@ public class RewardsService {
         proximityBuffer = defaultProximityBuffer;
     }
 
+    public void calculateRewards(List<User> users) {
+        // Create a fixed thread pool with a number of threads suitable for your application
+        ExecutorService executorService = Executors.newFixedThreadPool(128);
+
+        List<CompletableFuture<Void>> futures = users.stream()
+                .map(user -> calculateRewardsAsync(user, executorService))
+                .toList();
+
+        // Wait for all CompletableFuture to complete
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        // Shut down the executor service
+        executorService.shutdown();
+    }
+
+    private CompletableFuture<Void> calculateRewardsAsync(User user, ExecutorService executorService) {
+        return CompletableFuture.runAsync(() -> calculateRewards(user), executorService);
+    }
+
     public void calculateRewards(User user) {
         List<VisitedLocation> userLocations = new ArrayList<>(user.getVisitedLocations());
         List<Attraction> attractions = gpsUtil.getAttractions();
 
-        for (Attraction attraction : attractions) {
-            for (VisitedLocation visitedLocation : userLocations) {
-                if (user.getUserRewards().stream().filter(r -> r.attraction.attractionName.equals(attraction.attractionName)).count() == 0) {
+        for (VisitedLocation visitedLocation : userLocations) {
+            for (Attraction attraction : attractions) {
+                if (user.getUserRewards().stream().noneMatch(r -> r.attraction.attractionName.equals(attraction.attractionName))) {
                     if (nearAttraction(visitedLocation, attraction)) {
-                        user.addUserReward(new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
+                        int rewardPoints = getRewardPoints(attraction, user);
+                        user.addUserReward(new UserReward(visitedLocation, attraction, rewardPoints));
                     }
                 }
             }

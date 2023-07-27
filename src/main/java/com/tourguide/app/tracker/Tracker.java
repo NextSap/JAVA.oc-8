@@ -1,4 +1,4 @@
-package com.tourguide.app.task;
+package com.tourguide.app.tracker;
 
 import com.tourguide.app.object.User;
 import com.tourguide.app.service.TourGuideService;

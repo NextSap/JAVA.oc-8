@@ -1,7 +1,7 @@
 package com.tourguide.app.service;
 
 import com.tourguide.app.object.NearbyAttractionResponse;
-import com.tourguide.app.task.Tracker;
+import com.tourguide.app.tracker.Tracker;
 import com.tourguide.app.object.User;
 import com.tourguide.app.object.UserReward;
 import com.tourguide.app.helper.InternalTestHelper;
@@ -18,6 +18,10 @@ import tripPricer.TripPricer;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -25,7 +29,7 @@ public class TourGuideService {
     private final Logger logger = LoggerFactory.getLogger(TourGuideService.class);
     private final GpsUtil gpsUtil;
     private final RewardsService rewardsService;
-    private final TripPricer tripPricer = new TripPricer();
+    private final TripPricer tripPricer;
     private final RewardCentral rewardsCentral;
     public final Tracker tracker;
     boolean testMode = true;
@@ -33,6 +37,7 @@ public class TourGuideService {
     public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService, RewardCentral rewardCentral) {
         this.gpsUtil = gpsUtil;
         this.rewardsService = rewardsService;
+        this.tripPricer = new TripPricer();
         this.rewardsCentral = rewardCentral;
         this.tracker = new Tracker(this);
 
@@ -44,7 +49,6 @@ public class TourGuideService {
             initializeInternalUsers();
             logger.debug("Finished initializing users");
         }
-        // tracker = new Tracker(this);
         addShutDownHook();
     }
 
@@ -87,18 +91,36 @@ public class TourGuideService {
         return visitedLocation;
     }
 
+    public CompletableFuture<VisitedLocation> trackUserLocationAsync(User user, ExecutorService service) {
+        return CompletableFuture.supplyAsync(() -> trackUserLocation(user), service);
+    }
+
+    public List<VisitedLocation> trackUserLocationsForAllUsers(List<User> users) {
+        ExecutorService executorService = Executors.newFixedThreadPool(128);
+
+        List<CompletableFuture<VisitedLocation>> futures = users.stream()
+                .map(user -> trackUserLocationAsync(user, executorService))
+                .toList();
+
+        List<VisitedLocation> visitedLocations = futures.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+
+        executorService.shutdown();
+
+        return visitedLocations;
+    }
+
     public List<NearbyAttractionResponse> getNearByAttractions(VisitedLocation visitedLocation) {
         List<NearbyAttractionResponse> nearbyAttractions = new ArrayList<>();
         gpsUtil.getAttractions().stream().sorted(Comparator.comparingDouble(attraction -> rewardsService.getDistance(attraction, visitedLocation.location)))
-                .limit(5).forEach(attraction -> {
-                    nearbyAttractions.add(NearbyAttractionResponse.builder()
-                            .attractionName(attraction.attractionName)
-                            .attractionLocation(new Location(attraction.longitude, attraction.latitude))
-                            .userLocation(visitedLocation.location)
-                            .distance(rewardsService.getDistance(attraction, visitedLocation.location))
-                            .rewardPoints(rewardsCentral.getAttractionRewardPoints(attraction.attractionId, visitedLocation.userId))
-                            .build());
-                });
+                .limit(5).forEach(attraction -> nearbyAttractions.add(NearbyAttractionResponse.builder()
+                        .attractionName(attraction.attractionName)
+                        .attractionLocation(new Location(attraction.longitude, attraction.latitude))
+                        .userLocation(visitedLocation.location)
+                        .distance(rewardsService.getDistance(attraction, visitedLocation.location))
+                        .rewardPoints(rewardsCentral.getAttractionRewardPoints(attraction.attractionId, visitedLocation.userId))
+                        .build()));
 
         return nearbyAttractions;
     }
@@ -131,10 +153,8 @@ public class TourGuideService {
     }
 
     private void generateUserLocationHistory(User user) {
-        IntStream.range(0, 3).forEach(i -> {
-            user.addToVisitedLocations(new VisitedLocation(user.getUserId(),
-                    new Location(generateRandomLatitude(), generateRandomLongitude()), getRandomTime()));
-        });
+        IntStream.range(0, 3).forEach(i -> user.addToVisitedLocations(new VisitedLocation(user.getUserId(),
+                new Location(generateRandomLatitude(), generateRandomLongitude()), getRandomTime())));
     }
 
     private double generateRandomLongitude() {
