@@ -58,9 +58,11 @@ public class TestRewardsService {
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, rewardsCentral);
 		System.out.println("break 2");
 		rewardsService.calculateRewards(tourGuideService.getAllUsers().get(0));
+		System.out.println("break 3");
 		List<UserReward> userRewards = tourGuideService.getUserRewards(tourGuideService.getAllUsers().get(0));
+		System.out.println("break 4");
 		tourGuideService.tracker.stopTracking();
-
+		System.out.println("break 5");
 		System.out.println("nearAllAttractions end");
 		assertEquals(gpsUtil.getAttractions().size(), userRewards.size());
 	}
