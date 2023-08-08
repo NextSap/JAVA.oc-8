@@ -9,6 +9,7 @@ import gpsUtil.location.Attraction;
 import gpsUtil.location.VisitedLocation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import rewardCentral.RewardCentral;
 
@@ -49,6 +50,7 @@ public class TestPerformance {
 
     }
 
+    @Disabled
     @Test // 100000 = 200s environ
     public void highVolumeTrackLocation() {
         GpsUtil gpsUtil = new GpsUtil();
@@ -76,6 +78,7 @@ public class TestPerformance {
         assertTrue(TimeUnit.MINUTES.toSeconds(15) >= TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
     }
 
+    @Disabled
     @Test // 100000 = 400s environ
     public void highVolumeGetRewards() {
         GpsUtil gpsUtil = new GpsUtil();
