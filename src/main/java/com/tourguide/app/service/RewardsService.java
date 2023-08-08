@@ -24,6 +24,8 @@ public class RewardsService {
     private final GpsUtil gpsUtil;
     private final RewardCentral rewardsCentral;
 
+    private final ExecutorService executorService = Executors.newFixedThreadPool(128);
+
     public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral) {
         this.gpsUtil = gpsUtil;
         this.rewardsCentral = rewardCentral;
@@ -37,33 +39,27 @@ public class RewardsService {
         proximityBuffer = defaultProximityBuffer;
     }
 
-    public void calculateRewards(List<User> users) {
-        // Create a fixed thread pool with a number of threads suitable for your application
-        ExecutorService executorService = Executors.newFixedThreadPool(128);
+    public void calculateRewardsForAllUsers(List<User> users) {
+        users.forEach(this::calculateRewardsAsync);
 
-        List<CompletableFuture<Void>> futures = users.stream()
-                .map(user -> calculateRewardsAsync(user, executorService))
-                .toList();
-
-        // Wait for all CompletableFuture to complete
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-        // Shut down the executor service
-        executorService.shutdown();
+        this.executorService.shutdown();
     }
 
-    private CompletableFuture<Void> calculateRewardsAsync(User user, ExecutorService executorService) {
-        return CompletableFuture.runAsync(() -> calculateRewards(user), executorService);
+    public CompletableFuture<Void> calculateRewardsAsync(User user) {
+        return CompletableFuture.runAsync(() -> calculateRewards(user), this.executorService);
     }
 
     public void calculateRewards(User user) {
         List<VisitedLocation> userLocations = new ArrayList<>(user.getVisitedLocations());
         List<Attraction> attractions = gpsUtil.getAttractions();
 
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        System.out.println(" --- débug start ---");
-        System.out.println(stackTraceElements[2].getMethodName() + " - " + stackTraceElements[2].getLineNumber());
-        System.out.println(" --- débug start ---");
+/*
+         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+         System.out.println(" --- débug start ---");
+         System.out.println(stackTraceElements[2].getMethodName() + " - " + stackTraceElements[2].getLineNumber());
+         System.out.println(" --- débug end ---");
+         */
+
 
         for (VisitedLocation visitedLocation : userLocations) {
             for (Attraction attraction : attractions) {
