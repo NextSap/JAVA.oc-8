@@ -23,5 +23,4 @@ public class BeanConfig {
 	public RewardCentral getRewardCentral() {
 		return new RewardCentral();
 	}
-
 }

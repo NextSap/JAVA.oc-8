@@ -2,11 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, ci-pipeline ]
   pull_request:
-    branches:
-      - main
+    branches: [ main, ci-pipeline ]
 
 jobs:
   build:
@@ -21,9 +19,19 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '17'
+          distribution: 'oracle'
+
+      - name: Import GpsUtil.jar
+        run: mvn install:install-file -Dfile=librairies/GpsUtil.jar -DgroupId=gpsUtil -DartifactId=gpsUtil -Dversion=1.0.0 -Dpackaging=jar
+
+      - name: Import RewardCentral.jar
+        run: mvn install:install-file -Dfile=librairies/RewardCentral.jar -DgroupId=rewardCentral -DartifactId=rewardCentral -Dversion=1.0.0 -Dpackaging=jar
+
+      - name: Import TripPricer.jar
+        run: mvn install:install-file -Dfile=librairies/TripPricer.jar -DgroupId=tripPricer -DartifactId=tripPricer -Dversion=1.0.0 -Dpackaging=jar
 
       - name: Build with Maven
-        run: mvn package --batch-mode
+        run: mvn package -DskipTests
 
       - name: Run Tests
-        run: mvn test --batch-mode
+        run: mvn test

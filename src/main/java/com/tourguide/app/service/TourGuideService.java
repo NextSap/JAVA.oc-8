@@ -1,5 +1,6 @@
 package com.tourguide.app.service;
 
+import com.tourguide.app.exceptions.UserException;
 import com.tourguide.app.object.NearbyAttractionResponse;
 import com.tourguide.app.tracker.Tracker;
 import com.tourguide.app.object.User;
@@ -21,7 +22,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -33,6 +33,8 @@ public class TourGuideService {
     private final RewardCentral rewardsCentral;
     public final Tracker tracker;
     boolean testMode = true;
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(64);
 
     public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService, RewardCentral rewardCentral) {
         this.gpsUtil = gpsUtil;
@@ -56,12 +58,20 @@ public class TourGuideService {
         return user.getUserRewards();
     }
 
+    public List<UserReward> getUserRewards(String userName) {
+        return getUserRewards(getUser(userName));
+    }
+
     public VisitedLocation getUserLocation(User user) {
         return (user.getVisitedLocations().size() > 0) ? user.getLastVisitedLocation()
                 : trackUserLocation(user);
     }
 
     public User getUser(String userName) {
+        Optional<User> user = Optional.ofNullable(internalUserMap.get(userName));
+
+        if (user.isEmpty()) throw new UserException.UserNotFoundException("User `" + userName + "` not found");
+
         return internalUserMap.get(userName);
     }
 
@@ -85,17 +95,21 @@ public class TourGuideService {
     }
 
     public VisitedLocation trackUserLocation(User user) {
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        System.out.println(" --- débug start trackUserLocation ---");
+        System.out.println(stackTraceElements[2].getMethodName() + " - " + stackTraceElements[2].getLineNumber());
+        System.out.println(" --- débug end trackUserLocation ---");
         VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
         user.addToVisitedLocations(visitedLocation);
         rewardsService.calculateRewards(user);
         return visitedLocation;
     }
 
-    public CompletableFuture<VisitedLocation> trackUserLocationAsync(User user, ExecutorService service) {
-        return CompletableFuture.supplyAsync(() -> trackUserLocation(user), service);
+    public CompletableFuture<VisitedLocation> trackUserLocationAsync(User user) {
+        return CompletableFuture.supplyAsync(() -> trackUserLocation(user), this.executorService);
     }
 
-    public List<VisitedLocation> trackUserLocationsForAllUsers(List<User> users) {
+ /*   public List<VisitedLocation> trackUserLocationsForAllUsers(List<User> users) {
         ExecutorService executorService = Executors.newFixedThreadPool(128);
 
         List<CompletableFuture<VisitedLocation>> futures = users.stream()
@@ -109,7 +123,7 @@ public class TourGuideService {
         executorService.shutdown();
 
         return visitedLocations;
-    }
+    } */
 
     public List<NearbyAttractionResponse> getNearByAttractions(VisitedLocation visitedLocation) {
         List<NearbyAttractionResponse> nearbyAttractions = new ArrayList<>();
