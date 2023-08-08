@@ -55,9 +55,9 @@ public class RewardsService {
 
 
          StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-         System.out.println(" --- débug start ---");
+         System.out.println(" --- débug start calculateRewards ---");
          System.out.println(stackTraceElements[2].getMethodName() + " - " + stackTraceElements[2].getLineNumber());
-         System.out.println(" --- débug end ---");
+         System.out.println(" --- débug end calculateRewards ---");
 
 
 
