@@ -48,6 +48,7 @@ public class TestRewardsService {
 
 	@Test
 	public void nearAllAttractions() {
+		System.out.println("TestRewardsService - nearAllAttractions STARTING");
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardCentral rewardsCentral = new RewardCentral();
 		RewardsService rewardsService = new RewardsService(gpsUtil, rewardsCentral);
@@ -61,6 +62,7 @@ public class TestRewardsService {
 		List<UserReward> userRewards = tourGuideService.getUserRewards(tourGuideService.getAllUsers().get(0));
 
 		tourGuideService.tracker.stopTracking();
+		System.out.println("TestRewardsService - nearAllAttractions ENDING");
 		assertEquals(gpsUtil.getAttractions().size(), userRewards.size());
 	}
 }
