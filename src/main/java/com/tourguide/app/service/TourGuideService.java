@@ -95,10 +95,6 @@ public class TourGuideService {
     }
 
     public VisitedLocation trackUserLocation(User user) {
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        System.out.println(" --- débug start trackUserLocation ---");
-        System.out.println(stackTraceElements[2].getMethodName() + " - " + stackTraceElements[2].getLineNumber());
-        System.out.println(" --- débug end trackUserLocation ---");
         VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
         user.addToVisitedLocations(visitedLocation);
         rewardsService.calculateRewards(user);

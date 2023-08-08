@@ -53,14 +53,6 @@ public class RewardsService {
         List<VisitedLocation> userLocations = new ArrayList<>(user.getVisitedLocations());
         List<Attraction> attractions = gpsUtil.getAttractions();
 
-
-         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-         System.out.println(" --- débug start calculateRewards ---");
-         System.out.println(stackTraceElements[2].getMethodName() + " - " + stackTraceElements[2].getLineNumber());
-         System.out.println(" --- débug end calculateRewards ---");
-
-
-
         for (VisitedLocation visitedLocation : userLocations) {
             for (Attraction attraction : attractions) {
                 if (user.getUserRewards().stream().noneMatch(r -> r.attraction.attractionName.equals(attraction.attractionName))) {
