@@ -105,22 +105,6 @@ public class TourGuideService {
         return CompletableFuture.supplyAsync(() -> trackUserLocation(user), this.executorService);
     }
 
- /*   public List<VisitedLocation> trackUserLocationsForAllUsers(List<User> users) {
-        ExecutorService executorService = Executors.newFixedThreadPool(128);
-
-        List<CompletableFuture<VisitedLocation>> futures = users.stream()
-                .map(user -> trackUserLocationAsync(user, executorService))
-                .toList();
-
-        List<VisitedLocation> visitedLocations = futures.stream()
-                .map(CompletableFuture::join)
-                .collect(Collectors.toList());
-
-        executorService.shutdown();
-
-        return visitedLocations;
-    } */
-
     public List<NearbyAttractionResponse> getNearByAttractions(VisitedLocation visitedLocation) {
         List<NearbyAttractionResponse> nearbyAttractions = new ArrayList<>();
         gpsUtil.getAttractions().stream().sorted(Comparator.comparingDouble(attraction -> rewardsService.getDistance(attraction, visitedLocation.location)))
