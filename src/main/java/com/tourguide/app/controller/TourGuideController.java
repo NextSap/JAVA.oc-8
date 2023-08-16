@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import tripPricer.Provider;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 public class TourGuideController {
@@ -33,8 +32,8 @@ public class TourGuideController {
     }
 
     @RequestMapping("/getLocation")
-    public CompletableFuture<VisitedLocation> getLocation(@RequestParam String userName) {
-        return tourGuideService.trackUserLocationAsync(getUser(userName));
+    public VisitedLocation getLocation(@RequestParam String userName) {
+        return tourGuideService.trackUserLocation(getUser(userName));
     }
 
     //  TODO: Change this method to no longer return a List of Attractions.

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import rewardCentral.RewardCentral;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -58,10 +60,12 @@ public class TestPerformance {
         RewardsService rewardsService = new RewardsService(gpsUtil, rewardCentral);
         // Users should be incremented up to 100,000, and test finishes within 15
         // minutes
-        InternalTestHelper.setInternalUserNumber(1000);
+        InternalTestHelper.setInternalUserNumber(100000);
         TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, rewardCentral);
 
         List<User> allUsers = tourGuideService.getAllUsers();
+
+        System.out.println("["+LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))+ "] " + "Begin highVolumeTrackLocation Test. Testing " + InternalTestHelper.getInternalUserNumber() + " users.");
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -73,7 +77,7 @@ public class TestPerformance {
         stopWatch.stop();
         tourGuideService.tracker.stopTracking();
 
-        System.out.println("highVolumeTrackLocation: Time Elapsed: "
+        System.out.println("["+LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))+ "] " + "Testing Time Elapsed: "
                 + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()) + " seconds.");
         assertTrue(TimeUnit.MINUTES.toSeconds(15) >= TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
     }
@@ -90,17 +94,18 @@ public class TestPerformance {
         InternalTestHelper.setInternalUserNumber(100000);
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
+
         TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, rewardCentral);
+
+
+        System.out.println("["+LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))+ "] " + "Begin highVolumeGetRewards Test. Testing " + InternalTestHelper.getInternalUserNumber() + " users.");
 
         Attraction attraction = gpsUtil.getAttractions().get(0);
         List<User> allUsers = tourGuideService.getAllUsers();
         allUsers.forEach(u -> u.addToVisitedLocations(new VisitedLocation(u.getUserId(), attraction, new Date())));
 
-       // rewardsService.calculateRewardsForAllUsers(allUsers);
-
-        List<CompletableFuture<Void>> completableFutures = allUsers.stream().map(rewardsService::calculateRewardsAsync).toList();
-
-        CompletableFuture.allOf(completableFutures.toArray(CompletableFuture[]::new)).join();
+        List<CompletableFuture<Void>> completableFuture = allUsers.stream().map(rewardsService::calculateRewardsAsync).toList();
+        CompletableFuture.allOf(completableFuture.toArray(CompletableFuture[]::new)).join();
 
         for (User user : allUsers) {
             assertTrue(user.getUserRewards().size() > 0);
@@ -109,7 +114,7 @@ public class TestPerformance {
         stopWatch.stop();
         tourGuideService.tracker.stopTracking();
 
-        System.out.println("highVolumeGetRewards: Time Elapsed: " + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime())
+        System.out.println("["+LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))+ "] " + "Testing Time Elapsed: " + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime())
                 + " seconds.");
         assertTrue(TimeUnit.MINUTES.toSeconds(20) >= TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
     }
